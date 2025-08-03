@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Robot Tài Xỉu 85% - Hit Club</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap');
+  body {
+    margin:0; padding:0;
+    background: #111;
+    color:#0f0;
+    font-family: 'Roboto Mono', monospace;
+    overflow-x:hidden;
+    user-select:none;
+  }
+  /* Tuyết rơi */
+  #snow {
+    pointer-events:none;
+    position:fixed;
+    top:0; left:0; width:100vw; height:100vh;
+    z-index: 1000;
+  }
+  .flake {
+    position:absolute;
+    top:-10px;
+    background: #fff;
+    border-radius: 50%;
+    opacity: 0.8;
+    filter: drop-shadow(0 0 1px white);
+    animation-name: fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh); }
+  }
+  /* Rainbow glow animation */
+  @keyframes rainbowGlow {
+    0%{filter: drop-shadow(0 0 8px red);}
+    20%{filter: drop-shadow(0 0 8px orange);}
+    40%{filter: drop-shadow(0 0 8px yellow);}
+    60%{filter: drop-shadow(0 0 8px green);}
+    80%{filter: drop-shadow(0 0 8px blue);}
+    100%{filter: drop-shadow(0 0 8px violet);}
+  }
+
+  /* Đăng nhập */
+  #loginScreen {
+    height: 100vh;
+    display:flex;
+    flex-direction: column;
+    justify-content:center;
+    align-items:center;
+  }
+  #loginScreen input {
+    background:#222;
+    border:none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 1.2rem;
+    color:#0f0;
+    width: 250px;
+    margin-bottom: 15px;
+    box-shadow: 0 0 10px #0f0 inset;
+  }
+  #loginScreen button {
+    background:#0f0;
+    border:none;
+    border-radius: 8px;
+    padding: 12px 25px;
+    font-weight: 700;
+    font-size: 1.2rem;
+    color:#111;
+    cursor:pointer;
+    box-shadow: 0 0 15px #0f0;
+    transition: background 0.3s ease;
+  }
+  #loginScreen button:hover {
+    background:#0c0;
+  }
+
+  /* Màn hình robot */
+  #robotScreen {
+    display:none;
+    height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+    text-align: center;
+  }
+
+  /* Robot container */
+  #robotContainer {
+    position: relative;
+    margin: 30px auto 20px;
+    width: 160px;
+    height: 220px;
+    background: #222;
+    border-radius: 20px 20px 40px 40px;
+    box-shadow:
+      0 0 20px #0f0,
+      0 0 35px #0f0 inset;
+    animation: rainbowGlow 4s linear infinite;
+    filter: drop-shadow(0 0 6px #0f0);
+    user-select:none;
+  }
+
+  /* Robot di chuyển nhẹ (lắc ngang) */
+  #robotContainer.move {
+    animation: moveSide 3s ease-in-out infinite;
+  }
+  @keyframes moveSide {
+    0%, 100% {transform: translateX(0);}
+    50% {transform: translateX(15px);}
+  }
+
+  /* Robot head - mặt tròn */
+  #head {
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(145deg, #0f0, #006600);
+    border-radius: 50%;
+    margin: 15px auto 0;
+    box-shadow: inset 0 0 15px #0f0;
+    position: relative;
+  }
+
+  /* Mắt robot */
+  #eyeLeft, #eyeRight {
+    position: absolute;
+    top: 42px;
+    width: 20px;
+    height: 20px;
+    background: #0f0;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #0f0;
+  }
+  #eyeLeft {
+    left: 35px;
+  }
+  #eyeRight {
+    right: 35px;
+  }
+
+  /* Thân robot */
+  #body {
+    width: 90px;
+    height: 80px;
+    background: linear-gradient(135deg, #003300, #005500);
+    margin: 10px auto;
+    border-radius: 20px 20px 15px 15px;
+    box-shadow: inset 0 0 10px #0f0;
+  }
+
+  /* Tay trái và phải */
+  #armLeft, #armRight {
+    position: absolute;
+    top: 90px;
+    width: 20px;
+    height: 70px;
+    background: linear-gradient(45deg, #004400, #007700);
+    border-radius: 15px;
+    box-shadow: inset 0 0 8px #0f0;
+  }
+  #armLeft {
+    left: -25px;
+    transform-origin: top center;
+    transition: transform 0.3s ease;
+  }
+  #armRight {
+    right: -25px;
+    transform-origin: top center;
+    transition: transform 0.3s ease;
+  }
+
+  /* Tay robot cầm bảng */
+  #board {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111;
+    border: 2px solid #0f0;
+    border-radius: 10px;
+    padding: 10px 15px;
+    font-weight: 700;
+    font-size: 1.4rem;
+    width: 100px;
+    text-align: center;
+    box-shadow: 0 0 10px #0f0;
+    user-select:none;
+  }
+
+  /* Chân robot */
+  #legLeft, #legRight {
+    position: absolute;
+    bottom: 10px;
+    width: 25px;
+    height: 50px;
+    background: linear-gradient(135deg, #002200, #004400);
+    border-radius: 12px;
+    box-shadow: inset 0 0 10px #0f0;
+  }
+  #legLeft {
+    left: 40px;
+  }
+  #legRight {
+    right: 40px;
+  }
+
+  /* Đồng hồ đếm ngược */
+  #timer {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-top: 10px;
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 10px #0f0;
+  }
+
+  /* Dự đoán */
+  #prediction {
+    font-size: 1.8rem;
+    margin-top: 10px;
+    font-weight: 700;
+    text-shadow: 0 0 10px #0f0;
+  }
+  #prediction.tai {
+    color: #0f0;
+  }
+  #prediction.xiu {
+    color: #f00;
+  }
+
+  /* Tổng số lần chơi */
+  #totalCount {
+    margin-top: 12px;
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+
+  /* Mẹo chơi */
+  #tipsContainer {
+    margin: 25px auto 0;
+    width: 280px;
+    background: #222;
+    border-radius: 12px;
+    box-shadow: 0 0 15px #0f0;
+    padding: 15px 20px;
+    color: #0f0;
+    user-select:none;
+    position: relative;
+  }
+  #tipsTitle {
+    font-weight: 700;
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+  }
+  #tipsText {
+    max-height: 140px;
+    overflow-y: auto;
+    line-height: 1.5;
+  }
+  #lockTipsBtn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #111;
+    border: 1.5px solid #0f0;
+    color: #0f0;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 4px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    user-select:none;
+  }
+  #lockTipsBtn.locked {
+    background: #0f0;
+    color: #111;
+    border-color: #0c0;
+  }
+  #tipsText.locked {
+    filter: blur(4px);
+  }
+</style>
+</head>
+<body>
+
+<!-- Màn hình đăng nhập -->
+<div id="loginScreen">
+  <input id="keyInput" type="password" placeholder="Nhập key (111)" maxlength="5" autocomplete="off" />
+  <button id="loginBtn">Đăng nhập</button>
+  <div id="loginMsg" style="margin-top:10px; color:#f00;"></div>
+</div>
+
+<!-- Màn hình robot -->
+<div id="robotScreen">
+  <div id="robotContainer" class="move" aria-label="Robot tài xỉu">
+    <div id="head" role="img" aria-label="Đầu robot mặt tròn">
+      <div id="eyeLeft"></div>
+      <div id="eyeRight"></div>
+    </div>
+    <div id="armLeft"><div class="hand"></div></div>
+    <div id="board">---</div>
+    <div id="armRight"><div class="hand"></div></div>
+    <div id="body"></div>
+    <div id="legLeft"></div>
+    <div id="legRight"></div>
+  </div>
+
+  <div id="timer" aria-live="polite" aria-atomic="true">30</div>
+  <div id="prediction" aria-live="polite" aria-atomic="true">Đoán: ---</div>
+  <div id="totalCount">Lượt chơi: 0 / 20</div>
+
+  <div id="tipsContainer" aria-label="Mẹo cách chơi robot tài xỉu">
+    <div id="tipsTitle">Mẹo chơi robot tài xỉu</div>
+    <button id="lockTipsBtn" aria-pressed="false" aria-label="Khóa/Mở mẹo chơi">Khóa</button>
+    <div id="tipsText">
+      <ul>
+        <li>Robot đoán đúng khoảng 85%, không nên cược tất cả.</li>
+        <li>Quan sát kết quả vài lần để hiểu pattern.</li>
+        <li>Chơi có giới hạn, không tham lam.</li>
+        <li>Dừng lại khi thắng liên tiếp để bảo toàn vốn.</li>
+        <li>Không nên tin tuyệt đối, tài xỉu vẫn là trò may rủi.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Tuyết rơi -->
+<div id="snow"></div>
+
+<script>
+  // --- Đăng nhập ---
+  const loginScreen = document.getElementById('loginScreen');
+  const robotScreen = document.getElementById('robotScreen');
+  const loginBtn = document.getElementById('loginBtn');
+  const keyInput = document.getElementById('keyInput');
+  const loginMsg = document.getElementById('loginMsg');
+
+  // Robot elements
+  const robotContainer = document.getElementById('robotContainer');
+  const timerEl = document.getElementById('timer');
+  const predictionEl = document.getElementById('prediction');
+  const boardEl = document.getElementById('board');
+  const totalCountEl = document.getElementById('totalCount');
+  const armLeft = document.getElementById('armLeft');
+  const armRight = document.getElementById('armRight');
+  const tipsText = document.getElementById('tipsText');
+  const lockTipsBtn = document.getElementById('lockTipsBtn');
+
+  // Trạng thái
+  let count = 0;
+  const maxCount = 20;
+  const countdownMax = 30;
+  let countdown = countdownMax;
+  let timerInterval = null;
+  let roundRunning = false;
+
+  // Tài xỉu options
+  const options = ['TÀI', 'XỈU'];
+
+  // Độ chính xác ~85%
+  const accuracy = 0.85;
+
+  // Mở khóa mẹo chơi
+  let tipsLocked = true;
+
+  // Tạo tuyết rơi
+  function createSnow() {
+    const snowContainer = document.getElementById('snow');
+    const flakesCount = 80;
+    for(let i=0; i<flakesCount; i++) {
+      const flake = document.createElement('div');
+      flake.classList.add('flake');
+      const size = Math.random() * 4 + 2;
+      flake.style.width = size + 'px';
+      flake.style.height = size + 'px';
+      flake.style.left = (Math.random() * 100) + 'vw';
+      flake.style.animationDuration = (5 + Math.random()*10) + 's';
+      flake.style.animationDelay = (Math.random()*15) + 's';
+      snowContainer.appendChild(flake);
+    }
+  }
+  createSnow();
+
+  // Kiểm tra key đăng nhập
+  loginBtn.onclick = () => {
+    const key = keyInput.value.trim();
+    if(key === '111') {
+      loginMsg.textContent = '';
+      loginScreen.style.display = 'none';
+      robotScreen.style.display = 'block';
+      startRound();
+    } else {
+      loginMsg.textContent = 'Key sai, vui lòng nhập lại!';
+      keyInput.value = '';
+    }
+  };
+
+  // Chạy 1 vòng chơi
+  function startRound() {
+    if(roundRunning) return;
+    if(count >= maxCount) {
+      predictionEl.textContent = 'Đã chơi đủ 20 lượt.';
+      return;
+    }
+    roundRunning = true;
+    countdown = countdownMax;
+    timerEl.textContent = countdown;
+    boardEl.textContent = '---';
+    predictionEl.textContent = 'Đoán: ---';
+    predictionEl.className = '';
+    armLeft.style.transform = 'rotate(0deg)';
+    armRight.style.transform = 'rotate(0deg)';
+
+    // Đếm ngược 30s
+    timerInterval = setInterval(() => {
+      countdown--;
+      timerEl.textContent = countdown;
+      if(countdown <= 0) {
+        clearInterval(timerInterval);
+        showResult();
+      }
+    }, 1000);
+  }
+
+  // Sinh kết quả thật ngẫu nhiên
+  function getRealResult() {
+    return options[Math.floor(Math.random() * options.length)];
+  }
+
+  // Robot đoán với độ chính xác ~85%
+  function getRobotGuess(real) {
+    if(Math.random() < accuracy) {
+      return real; // đoán đúng
+    } else {
+      return real === 'TÀI' ? 'XỈU' : 'TÀI'; // đoán sai
+    }
+  }
+
+  // Hiển thị kết quả
+  function showResult() {
+    if(count >= maxCount) return;
+    const realResult = getRealResult();
+    const guess = getRobotGuess(realResult);
+    const isCorrect = guess === realResult;
+
+    boardEl.textContent = realResult;
+    predictionEl.textContent = `Đoán: ${guess} ${isCorrect ? '✅' : '❌'}`;
+    predictionEl.className = guess === 'TÀI' ? 'tai' : 'xiu';
+
+    // Tay robot chỉ lên bảng khi ra kết quả
+    if (guess === 'TÀI') {
+      armLeft.style.transform = 'rotate(20deg)';
+      armRight.style.transform = 'rotate(-10deg)';
+    } else {
+      armLeft.style.transform = 'rotate(-10deg)';
+      armRight.style.transform = 'rotate(20deg)';
+    }
+
+    count++;
+    totalCountEl.textContent = `Lượt chơi: ${count} / ${maxCount}`;
+    roundRunning = false;
+
+    // Tự động sang vòng tiếp theo sau 8s
+    setTimeout(() => {
+      if(count < maxCount) {
+        startRound();
+      } else {
+        predictionEl.textContent = 'Hoàn thành 20 lượt chơi!';
+        armLeft.style.transform = 'rotate(0deg)';
+        armRight.style.transform = 'rotate(0deg)';
+      }
+    }, 8000);
+  }
+
+  // Khoá/Mở mẹo chơi
+  lockTipsBtn.onclick = () => {
+    tipsLocked = !tipsLocked;
+    if(tipsLocked) {
+      tipsText.classList.add('locked');
+      lockTipsBtn.textContent = 'Khóa';
+      lockTipsBtn.classList.remove('locked');
+      lockTipsBtn.setAttribute('aria-pressed', 'false');
+    } else {
+      tipsText.classList.remove('locked');
+      lockTipsBtn.textContent = 'Mở khóa';
+      lockTipsBtn.classList.add('locked');
+      lockTipsBtn.setAttribute('aria-pressed', 'true');
+    }
+  };
+  // Khởi đầu khóa mẹo
+  tipsText.classList.add('locked');
+</script>
+</body>
+</html>
